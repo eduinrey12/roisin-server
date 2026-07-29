@@ -7,9 +7,11 @@ import { InventoryModule } from './inventory/inventory.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CartsModule } from './carts/carts.module';
+import { OrdersModule } from './orders/orders.module';
+import { ShippingModule } from './shipping/shipping.module';
 
 @Module({
-  imports: [DatabaseModule, CatalogModule, InventoryModule, AuthModule, UsersModule, CartsModule],
+  imports: [DatabaseModule, CatalogModule, InventoryModule, AuthModule, UsersModule, CartsModule, OrdersModule, ShippingModule],
   controllers: [AppController],
   providers: [AppService],
 })

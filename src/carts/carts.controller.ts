@@ -11,7 +11,6 @@ export class CartsController {
     @Headers('x-guest-token') guestToken?: string,
     @Request() req?: any,
   ) {
-    // Try to get user from request if they passed a token, but don't strictly require it
     const userId = req.user?.id; 
     return this.cartsService.getCart(guestToken, userId);
   }
@@ -24,7 +23,7 @@ export class CartsController {
   ) {
     const cart = await this.cartsService.getCart(guestToken, req.user?.id);
     await this.cartsService.addItem(cart.id, body.variantId, body.quantity);
-    return this.cartsService.getCart(cart.guestToken, req.user?.id);
+    return this.cartsService.getCart(cart.guestToken || undefined, req.user?.id);
   }
 
   @Put('items/:id')

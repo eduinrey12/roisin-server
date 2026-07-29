@@ -54,7 +54,7 @@ export class CartsService {
 
   async mergeCarts(guestToken: string, userId: string) {
     const guestCart = await this.db.cart.findUnique({ where: { guestToken }, include: { items: true } });
-    if (!guestCart) return this.getCart(null, userId);
+    if (!guestCart) return this.getCart(undefined, userId);
 
     let userCart = await this.db.cart.findFirst({ where: { userId } });
     if (!userCart) {
@@ -70,6 +70,6 @@ export class CartsService {
       await this.addItem(userCart.id, item.variantId, item.quantity);
     }
     await this.db.cart.delete({ where: { id: guestCart.id } });
-    return this.getCart(null, userId);
+    return this.getCart(undefined, userId);
   }
 }

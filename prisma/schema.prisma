@@ -63,6 +63,7 @@ model ProductVariant {
   attributes     VariantAttributeValue[]
   inventory      InventoryItem?
   cartItems      CartItem[]
+  orderItems     OrderItem[]
   createdAt      DateTime                @default(now())
   updatedAt      DateTime                @updatedAt
 }
@@ -168,6 +169,7 @@ model User {
   role            Role             @default(CUSTOMER)
   customerProfile CustomerProfile?
   carts           Cart[]
+  orders          Order[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
@@ -236,4 +238,60 @@ model CartItemOption {
   option     ProductOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
 
   @@unique([cartItemId, optionId])
+}
+
+// -----------------------------------------------------------------------------
+// Checkout & Orders (Phase 3)
+// -----------------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id             String      @id @default(uuid())
+  orderNumber    String      @unique // e.g., "ROI-1001"
+  userId         String?     // Can be null if guest checkout is allowed (if we support it)
+  user           User?       @relation(fields: [userId], references: [id])
+  customerEmail  String
+  customerName   String
+  customerPhone  String?
+  shippingAddress String     // Snapshot of address at checkout
+  city           String
+  province       String
+  subtotal       Float
+  shippingCost   Float
+  discount       Float       @default(0)
+  total          Float
+  status         OrderStatus @default(PENDING)
+  items          OrderItem[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String         @id @default(uuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id])
+  quantity  Int
+  price     Float          // Snapshot of price at purchase
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model ShippingRegion {
+  id        String   @id @default(uuid())
+  name      String   @unique // e.g., "Quito Centro", "Valles", "Resto del País"
+  baseRate  Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
