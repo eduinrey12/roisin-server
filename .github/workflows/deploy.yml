@@ -1,0 +1,59 @@
+name: Deploy Backend (NestJS)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Instalar dependencias
+        run: pnpm install
+
+      - name: Generar Prisma Client
+        run: npx prisma generate
+
+      - name: Compilar proyecto (Build)
+        run: pnpm build
+
+      - name: Subir archivos a Hostinger
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          source: "dist,prisma,package.json,pnpm-lock.yaml"
+          target: "${{ secrets.REMOTE_TARGET }}" # EJ: /home/u1234567/domains/roisinjoyasyaccesorios.com/public_html/api
+          strip_components: 0
+
+      - name: Instalar dependencias de producción y reiniciar
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          port: ${{ secrets.PORT }}
+          script: |
+            cd ${{ secrets.REMOTE_TARGET }}
+            npm install -g pnpm pm2
+            pnpm install --prod
+            npx prisma generate
+            npx prisma migrate deploy
+            pm2 restart roisin-server || pm2 start dist/main.js --name "roisin-server"
+            pm2 save
