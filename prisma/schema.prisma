@@ -271,6 +271,7 @@ model Order {
   total          Float
   status         OrderStatus @default(PENDING)
   items          OrderItem[]
+  payment        Payment?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
@@ -294,4 +295,33 @@ model ShippingRegion {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Payments (Phase 4)
+// -----------------------------------------------------------------------------
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CASH_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFYING
+  COMPLETED
+  FAILED
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  orderId         String        @unique
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method          PaymentMethod
+  status          PaymentStatus @default(PENDING)
+  amount          Float
+  evidenceUrl     String?       // URL to the uploaded receipt/evidence
+  referenceNumber String?       // Bank transfer reference number
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
