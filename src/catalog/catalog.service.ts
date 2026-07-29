@@ -19,8 +19,8 @@ export class CatalogService {
         ...(params?.categorySlug && { category: { slug: params.categorySlug } }),
         ...(params?.query && {
           OR: [
-            { title: { contains: params.query, mode: 'insensitive' } },
-            { description: { contains: params.query, mode: 'insensitive' } },
+            { title: { contains: params.query } },
+            { description: { contains: params.query } },
           ]
         })
       },
