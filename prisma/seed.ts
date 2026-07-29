@@ -1,6 +1,10 @@
 import { PrismaClient } from '@prisma/client';
+import * as mariadb from 'mariadb';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 
-const prisma = new PrismaClient();
+const pool = mariadb.createPool(process.env.DATABASE_URL as string);
+const adapter = new PrismaMariaDb(pool as any);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log('Seeding data...');
