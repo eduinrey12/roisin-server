@@ -8,8 +8,16 @@ import * as mariadb from 'mariadb';
 @Injectable()
 export class DatabaseService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
-    const urlString = (process.env.DATABASE_URL as string).replace(/^mysql:\/\//, 'mariadb://');
-    const adapter = new PrismaMariaDb(mariadb.createPool(urlString) as any);
+    const dbUrl = new URL(process.env.DATABASE_URL as string);
+    const pool = mariadb.createPool({
+      host: dbUrl.hostname,
+      port: Number(dbUrl.port) || 3306,
+      user: decodeURIComponent(dbUrl.username),
+      password: decodeURIComponent(dbUrl.password),
+      database: dbUrl.pathname.replace(/^\//, ''),
+      connectionLimit: 5
+    });
+    const adapter = new PrismaMariaDb(pool as any);
     super({ adapter });
   }
 
