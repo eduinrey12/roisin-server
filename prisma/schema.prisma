@@ -1,13 +1,150 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+// -----------------------------------------------------------------------------
+// Catalog & Inventory (Phase 1)
+// -----------------------------------------------------------------------------
+
+model Category {
+  id          String     @id @default(uuid())
+  slug        String     @unique
+  name        String
+  description String?
+  isActive    Boolean    @default(true)
+  parentId    String?
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+  products    Product[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Product {
+  id               String                         @id @default(uuid())
+  slug             String                         @unique
+  title            String
+  description      String
+  basePrice        Decimal                        @db.Decimal(10, 2)
+  isActive         Boolean                        @default(true)
+  categoryId       String
+  category         Category                       @relation(fields: [categoryId], references: [id])
+  images           ProductImage[]
+  variants         ProductVariant[]
+  optionGroupLinks ProductOptionGroupAssignment[]
+  createdAt        DateTime                       @default(now())
+  updatedAt        DateTime                       @updatedAt
+}
+
+model ProductImage {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProductVariant {
+  id             String                  @id @default(uuid())
+  productId      String
+  product        Product                 @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku            String                  @unique
+  price          Decimal                 @db.Decimal(10, 2)
+  compareAtPrice Decimal?                @db.Decimal(10, 2)
+  isActive       Boolean                 @default(true)
+  attributes     VariantAttributeValue[]
+  inventory      InventoryItem?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+}
+
+model ProductAttribute {
+  id        String                  @id @default(uuid())
+  name      String                  @unique // e.g., "Color", "Material", "Talla"
+  values    ProductAttributeValue[]
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
+}
+
+model ProductAttributeValue {
+  id          String                  @id @default(uuid())
+  attributeId String
+  attribute   ProductAttribute        @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  value       String                  // e.g., "Rojo", "Oro 18k", "7"
+  variants    VariantAttributeValue[]
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+
+  @@unique([attributeId, value])
+}
+
+model VariantAttributeValue {
+  variantId        String
+  variant          ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  attributeValueId String
+  attributeValue   ProductAttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+
+  @@id([variantId, attributeValueId])
+}
+
+model ProductOptionGroup {
+  id          String                         @id @default(uuid())
+  name        String                         // e.g., "Presentación"
+  description String?
+  isMultiSelect Boolean                      @default(false)
+  options     ProductOption[]
+  productLinks ProductOptionGroupAssignment[]
+  createdAt   DateTime                       @default(now())
+  updatedAt   DateTime                       @updatedAt
+}
+
+model ProductOption {
+  id            String             @id @default(uuid())
+  groupId       String
+  group         ProductOptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name          String             // e.g., "Caja de regalo", "Sin presentación"
+  description   String?
+  priceModifier Decimal            @default(0.00) @db.Decimal(10, 2)
+  imageUrl      String?
+  isDefault     Boolean            @default(false)
+  isActive      Boolean            @default(true)
+  sortOrder     Int                @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+}
+
+model ProductOptionGroupAssignment {
+  productId String
+  product   Product            @relation(fields: [productId], references: [id], onDelete: Cascade)
+  groupId   String
+  group     ProductOptionGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([productId, groupId])
+}
+
+model InventoryItem {
+  id        String              @id @default(uuid())
+  variantId String              @unique
+  variant   ProductVariant      @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int                 @default(0)
+  movements InventoryMovement[]
+  updatedAt DateTime            @updatedAt
+}
+
+model InventoryMovement {
+  id              String        @id @default(uuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  quantityChange  Int
+  reason          String        // e.g., "MANUAL_ADJUSTMENT", "ORDER_PLACED", "RESTOCK"
+  referenceId     String?       // Could be Order ID or null for manual
+  createdAt       DateTime      @default(now())
 }
