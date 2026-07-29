@@ -10,9 +10,11 @@ import { CartsModule } from './carts/carts.module';
 import { OrdersModule } from './orders/orders.module';
 import { ShippingModule } from './shipping/shipping.module';
 import { PaymentsModule } from './payments/payments.module';
+import { PromotionsModule } from './promotions/promotions.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
-  imports: [DatabaseModule, CatalogModule, InventoryModule, AuthModule, UsersModule, CartsModule, OrdersModule, ShippingModule, PaymentsModule],
+  imports: [DatabaseModule, CatalogModule, InventoryModule, AuthModule, UsersModule, CartsModule, OrdersModule, ShippingModule, PaymentsModule, PromotionsModule, AdminModule],
   controllers: [AppController],
   providers: [AppService],
 })

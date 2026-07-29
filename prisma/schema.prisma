@@ -272,6 +272,8 @@ model Order {
   status         OrderStatus @default(PENDING)
   items          OrderItem[]
   payment        Payment?
+  couponId       String?
+  coupon         Coupon?     @relation(fields: [couponId], references: [id])
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 }
@@ -324,4 +326,21 @@ model Payment {
   referenceNumber String?       // Bank transfer reference number
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
+}
+
+// -----------------------------------------------------------------------------
+// Promotions & Admin (Phase 5)
+// -----------------------------------------------------------------------------
+
+model Coupon {
+  id                 String    @id @default(uuid())
+  code               String    @unique
+  discountPercentage Float
+  maxUses            Int?
+  currentUses        Int       @default(0)
+  validUntil         DateTime?
+  isActive           Boolean   @default(true)
+  orders             Order[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 }

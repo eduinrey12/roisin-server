@@ -12,8 +12,7 @@ export class OrdersController {
     @Request() req: any
   ) {
     // Note: If using JwtAuthGuard optionally, req.user might be populated
-    // We didn't enforce UseGuards(AuthGuard('jwt')) globally here to allow guest checkouts.
     const userId = req.user?.id;
-    return this.ordersService.createOrderFromCart(guestToken, userId, checkoutData);
+    return this.ordersService.createOrderFromCart(guestToken, userId, checkoutData, checkoutData.couponCode);
   }
 }
